@@ -5,9 +5,14 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   test-backend:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       matrix:
         service: [auth-service, user-service, asset-service, request-service, assignment-service, maintenance-service, notification-service, audit-service]
@@ -21,6 +26,8 @@ jobs:
 
   test-frontend:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -32,6 +39,9 @@ jobs:
     needs: [test-backend, test-frontend]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v4
       - name: Build images
