@@ -1,0 +1,15 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logstash
+  namespace: lams-prod
+spec:
+  selector:
+    matchLabels: { app: logstash }
+  template:
+    metadata:
+      labels: { app: logstash }
+    spec:
+      containers:
+      - name: logstash
+        image: docker.elastic.co/logstash/logstash:8.13.4

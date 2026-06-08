@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: lams-ingress
+  namespace: lams-prod
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: [lams.local]
+      secretName: lams-tls
+  rules:
+    - host: lams.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80

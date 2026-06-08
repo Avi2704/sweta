@@ -1,0 +1,51 @@
+name: LAMS CI/CD Pipeline
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test-backend:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        service: [auth-service, user-service, asset-service, request-service, assignment-service, maintenance-service, notification-service, audit-service]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: temurin
+      - run: mvn -f backend/pom.xml test -pl ${{ matrix.service }}
+
+  test-frontend:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: cd frontend && npm ci && npm run test -- --run && npm run lint
+
+  build-and-push:
+    needs: [test-backend, test-frontend]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build images
+        run: |
+          for service in auth user asset request assignment maintenance notification audit; do
+            docker build -t ghcr.io/${{ github.repository }}/lams-$service-service:${{ github.sha }} ./backend/$service-service
+          done

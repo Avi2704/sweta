@@ -1,0 +1,33 @@
+openapi: 3.0.3
+info:
+  title: LAMS API
+  version: 1.0.0
+servers:
+  - url: https://api.lams.local
+paths:
+  /api/v1/assets:
+    get:
+      summary: List assets
+      responses:
+        '200':
+          description: OK
+  /api/v1/assets/{id}/transition:
+    post:
+      summary: Transition asset state
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                targetState: { type: string }
+                reason: { type: string }
+      responses:
+        '200': { description: Transitioned }
+        '409': { description: Invalid state transition }
