@@ -1,0 +1,88 @@
+version: '3.9'
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./infra/mysql/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
+    volumes: ["redis-data:/data"]
+
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    volumes: ["rabbitmq-data:/var/lib/rabbitmq"]
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+
+  grafana:
+    image: grafana/grafana:latest
+    volumes:
+      - ./infra/grafana/lams-dashboard.json:/var/lib/grafana/dashboards/lams-dashboard.json:ro
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    volumes: ["elasticsearch-data:/usr/share/elasticsearch/data"]
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.13.4
+    volumes:
+      - ./infra/logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.13.4
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+
+  frontend:
+    build: ./frontend
+    ports: ["3000:80"]
+
+  auth-service:
+    build: ./backend/auth-service
+    depends_on: [mysql, redis, rabbitmq]
+  user-service:
+    build: ./backend/user-service
+    depends_on: [mysql, redis, rabbitmq]
+  asset-service:
+    build: ./backend/asset-service
+    depends_on: [mysql, redis, rabbitmq]
+  request-service:
+    build: ./backend/request-service
+    depends_on: [mysql, redis, rabbitmq]
+  assignment-service:
+    build: ./backend/assignment-service
+    depends_on: [mysql, redis, rabbitmq]
+  maintenance-service:
+    build: ./backend/maintenance-service
+    depends_on: [mysql, redis, rabbitmq]
+  notification-service:
+    build: ./backend/notification-service
+    depends_on: [mysql, redis, rabbitmq]
+  audit-service:
+    build: ./backend/audit-service
+    depends_on: [mysql, redis, rabbitmq]
+
+volumes:
+  mysql-data: {}
+  redis-data: {}
+  rabbitmq-data: {}
+  elasticsearch-data: {}

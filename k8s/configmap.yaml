@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lams-config
+  namespace: lams-prod
+data:
+  MYSQL_HOST: mysql
+  REDIS_HOST: redis
+  RABBITMQ_HOST: rabbitmq
+  NOTIFICATIONS_EXCHANGE: lams.notifications
